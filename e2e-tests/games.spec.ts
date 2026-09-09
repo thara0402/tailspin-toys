@@ -33,7 +33,7 @@ test.describe('Game Listing and Navigation', () => {
     await expect(previousButton).toBeDisabled();
     await expect(nextButton).toBeEnabled();
 
-    const visibleTitles = page.locator('[data-game-id]:visible').getByTestId('game-title');
+    const visibleTitles = page.locator('#games-grid > [data-game-id]:visible').getByTestId('game-title');
     const firstPageTitle = await visibleTitles.first().textContent();
     await nextButton.click();
 

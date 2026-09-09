@@ -34,7 +34,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     });
 
     await test.step('Verify initial game count', async () => {
-      const gameCards = page.locator('[data-game-id]');
+      const gameCards = page.locator('#games-grid > [data-game-id]');
       const initialCount = await gameCards.count();
       // There should be multiple games displayed
       expect(initialCount).toBeGreaterThan(0);
@@ -47,7 +47,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
 
     await test.step('Get initial game count and select first category', async () => {
       // Get initial count of all games
-      const allCards = page.locator('[data-game-id]');
+      const allCards = page.locator('#games-grid > [data-game-id]');
       initialCount = await allCards.count();
       expect(initialCount).toBeGreaterThan(1);
 
@@ -62,7 +62,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
 
     await test.step('Verify filtering reduced game count', async () => {
       // Get visible games after filtering
-      const visibleCards = page.locator('[data-game-id]:visible');
+      const visibleCards = page.locator('#games-grid > [data-game-id]:visible');
       const count = await visibleCards.count();
 
       // Should have fewer games than initially (or equal if all games are in this category)
@@ -84,7 +84,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
 
     await test.step('Select multiple categories', async () => {
       // Get initial count
-      const allCards = page.locator('[data-game-id]');
+      const allCards = page.locator('#games-grid > [data-game-id]');
       initialCount = await allCards.count();
 
       // Get and check first two checkboxes
@@ -106,7 +106,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     });
 
     await test.step('Verify games from selected categories are shown', async () => {
-      const visibleCards = page.locator('[data-game-id]:visible');
+      const visibleCards = page.locator('#games-grid > [data-game-id]:visible');
       const count = await visibleCards.count();
 
       // Should have fewer or equal games
@@ -127,7 +127,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     let publisherId = '';
 
     await test.step('Get initial count and select first publisher', async () => {
-      const allCards = page.locator('[data-game-id]');
+      const allCards = page.locator('#games-grid > [data-game-id]');
       initialCount = await allCards.count();
       expect(initialCount).toBeGreaterThan(0);
 
@@ -145,7 +145,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     });
 
     await test.step('Verify games are filtered to selected publisher', async () => {
-      const visibleCards = page.locator('[data-game-id]:visible');
+      const visibleCards = page.locator('#games-grid > [data-game-id]:visible');
       const count = await visibleCards.count();
 
       // Should have fewer or equal games
@@ -170,7 +170,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     });
 
     await test.step('Verify only games matching both filters are shown', async () => {
-      const visibleCards = page.locator('[data-game-id]:visible');
+      const visibleCards = page.locator('#games-grid > [data-game-id]:visible');
       const count = await visibleCards.count();
 
       if (count > 0) {
@@ -195,7 +195,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     });
 
     await test.step('Check for result', async () => {
-      const visibleCards = page.locator('[data-game-id]:visible');
+      const visibleCards = page.locator('#games-grid > [data-game-id]:visible');
       const gameCount = await visibleCards.count();
 
       // Either no games or no-results message shows
@@ -317,7 +317,7 @@ test.describe('Game Filtering - Categories and Publishers', () => {
 
   test('should display correct game count after filtering', async ({ page }) => {
     await test.step('Get initial game count', async () => {
-      const gameCards = page.locator('[data-game-id]:visible');
+      const gameCards = page.locator('#games-grid > [data-game-id]:visible');
       const initialCount = await gameCards.count();
       expect(initialCount).toBeGreaterThan(0);
     });
@@ -328,9 +328,9 @@ test.describe('Game Filtering - Categories and Publishers', () => {
     });
 
     await test.step('Verify filtered count is less than or equal to initial', async () => {
-      const filteredCards = page.locator('[data-game-id]:visible');
+      const filteredCards = page.locator('#games-grid > [data-game-id]:visible');
       const filteredCount = await filteredCards.count();
-      const allCards = page.locator('[data-game-id]');
+      const allCards = page.locator('#games-grid > [data-game-id]');
       const totalCount = await allCards.count();
 
       // Filtered count should be <= total count
