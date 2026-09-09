@@ -5,6 +5,14 @@ applyTo: '**/*.{astro,css}'
 
 # Tailwind CSS Instructions
 
+## TypeScript and comment conventions
+
+- Use explicit TypeScript types for function parameters and return values, especially in `db/` and `src/lib/`.
+- Prefer interfaces and typed props over ad hoc object shapes; keep the type contract close to the usage.
+- Comment intent, not mechanics: explain why a decision, fallback, or edge case exists instead of paraphrasing the code below it.
+- Keep comments and docs in sync with code changes; stale explanatory text is treated as a correctness issue.
+- ESLint enforces the repo's baseline quality rules, while the stronger documentation expectations remain a review requirement where automation is not practical.
+
 ## Tailwind CSS v4 Configuration
 
 This project uses Tailwind CSS v4.1.14 via the `@tailwindcss/vite` plugin.

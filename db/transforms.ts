@@ -14,8 +14,10 @@ export interface GameCsvRow {
 const CROWDFUNDING_BLURB = ' Support this game through our crowdfunding platform!';
 
 /**
- * Minimal RFC-4180-style CSV parser supporting quoted fields, escaped quotes
- * (""), and newlines inside quoted values. Returns rows keyed by header name.
+ * Parses a minimal RFC-4180-style CSV payload into rows keyed by header name.
+ *
+ * @param content - The raw CSV text, including quoted fields and escaped quotes.
+ * @returns The parsed records with the header names as keys.
  */
 export function parseCsv(content: string): Record<string, string>[] {
     const records: string[][] = [];
@@ -46,7 +48,7 @@ export function parseCsv(content: string): Record<string, string>[] {
             record.push(field);
             field = '';
         } else if (char === '\n' || char === '\r') {
-            // Handle CRLF by skipping the paired \n.
+            // Skip the paired LF that belongs to a CRLF sequence so the record boundary is not doubled.
             if (char === '\r' && content[i + 1] === '\n') {
                 i++;
             }
@@ -61,7 +63,7 @@ export function parseCsv(content: string): Record<string, string>[] {
         }
     }
 
-    // Flush trailing field/record (file without trailing newline).
+    // Always emit the final row even when the CSV is missing its trailing newline.
     if (field.length > 0 || record.length > 0) {
         record.push(field);
         if (record.some((value) => value.length > 0)) {
@@ -83,7 +85,12 @@ export function parseCsv(content: string): Record<string, string>[] {
     });
 }
 
-/** Parse the games seed CSV into typed rows. */
+/**
+ * Converts the raw CSV rows into a typed list with the canonical column names used by the seed script.
+ *
+ * @param content - The CSV payload read from db/games.csv.
+ * @returns The parsed game rows ready for seeding.
+ */
 export function parseGamesCsv(content: string): GameCsvRow[] {
     return parseCsv(content)
         .filter((row) => (row.Title ?? '').trim().length > 0)
@@ -95,24 +102,52 @@ export function parseGamesCsv(content: string): GameCsvRow[] {
         }));
 }
 
+/**
+ * Builds the category summary used in database records when a category is inserted or updated.
+ *
+ * @param name - The category name shown to users.
+ * @returns The descriptive blurb for that category.
+ */
 export function categoryDescription(name: string): string {
     return `Collection of ${name} games available for crowdfunding`;
 }
 
+/**
+ * Builds the publisher summary used in database records when the publisher is inserted.
+ *
+ * @param name - The publisher name shown in UI and metadata.
+ * @returns The publisher description text.
+ */
 export function publisherDescription(name: string): string {
     return `${name} is a game publisher seeking funding for exciting new titles`;
 }
 
+/**
+ * Appends the storefront's crowdfunding call-to-action to the raw description text.
+ *
+ * @param rawDescription - The description stored in the spreadsheet.
+ * @returns The description shown to shoppers with the campaign CTA appended.
+ */
 export function gameDescription(rawDescription: string): string {
     return rawDescription + CROWDFUNDING_BLURB;
 }
 
-/** Distinct category names in first-seen order. */
+/**
+ * Preserves the first-seen category order while removing duplicates.
+ *
+ * @param rows - Parsed CSV game rows.
+ * @returns Category names in insertion order without repetition.
+ */
 export function uniqueCategories(rows: GameCsvRow[]): string[] {
     return [...new Set(rows.map((row) => row.category))];
 }
 
-/** Distinct publisher names in first-seen order. */
+/**
+ * Preserves the first-seen publisher order while removing duplicates.
+ *
+ * @param rows - Parsed CSV game rows.
+ * @returns Publisher names in insertion order without repetition.
+ */
 export function uniquePublishers(rows: GameCsvRow[]): string[] {
     return [...new Set(rows.map((row) => row.publisher))];
 }

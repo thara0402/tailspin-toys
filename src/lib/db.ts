@@ -13,12 +13,20 @@ export interface DatabaseConnection {
     sqlite: DatabaseSync;
 }
 
-/** Default local SQLite file used for dev/build when DATABASE_URL is unset. */
+/**
+ * Local SQLite file used by the dev/build workflow when DATABASE_URL is unset.
+ * Keeping this in one place makes the database path consistent across scripts and pages.
+ */
 const DEFAULT_DATABASE_URL = 'file:tailspin.db';
 
 let cachedDb: Database | undefined;
 
-/** Resolve a local SQLite URL to the path expected by Node's built-in driver. */
+/**
+ * Converts a file: URL into the path expected by Node's built-in SQLite driver.
+ *
+ * @param url - The configured database URL, including file: URLs or :memory:.
+ * @returns The absolute or in-memory path used by DatabaseSync.
+ */
 function databasePath(url: string): string {
     if (url === ':memory:') {
         return url;
@@ -59,7 +67,12 @@ function createRemoteCallback(sqlite: DatabaseSync): AsyncRemoteCallback {
     };
 }
 
-/** Run generated migration statements atomically through Node's SQLite driver. */
+/**
+ * Applies a migration batch atomically so a failed schema change cannot leave the database half-updated.
+ *
+ * @param sqlite - The live SQLite connection for the current database.
+ * @param queries - The generated SQL statements to execute in order.
+ */
 export function executeMigrationQueries(sqlite: DatabaseSync, queries: string[]): void {
     sqlite.exec('BEGIN');
     try {
@@ -73,12 +86,22 @@ export function executeMigrationQueries(sqlite: DatabaseSync, queries: string[])
     }
 }
 
-/** Create a Drizzle client for the given local SQLite connection URL. */
+/**
+ * Creates a Drizzle database client for the configured SQLite URL.
+ *
+ * @param url - A file: URL or :memory: database path for the current workload.
+ * @returns A Drizzle client bound to the configured local SQLite database.
+ */
 export function createDatabase(url: string = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL): Database {
     return createDatabaseConnection(url).db;
 }
 
-/** Create the Drizzle client and its Node SQLite connection for migration workflows. */
+/**
+ * Opens the SQLite connection and wraps it in the Drizzle client used by migration scripts.
+ *
+ * @param url - The local SQLite file or in-memory database used for the current run.
+ * @returns An object containing the Drizzle database and the raw SQLite connection.
+ */
 export function createDatabaseConnection(
     url: string = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL,
 ): DatabaseConnection {
@@ -88,7 +111,11 @@ export function createDatabaseConnection(
     return { db, sqlite };
 }
 
-/** Shared singleton database client used by pages at build time. */
+/**
+ * Reuses a single database client for build-time page queries so each render reads from the same connection.
+ *
+ * @returns The cached Drizzle database client.
+ */
 export function getDatabase(): Database {
     if (!cachedDb) {
         cachedDb = createDatabase();

@@ -114,6 +114,26 @@ There is no Svelte/React layer. When a page genuinely needs client behaviour, ad
 - Run `npx astro sync` to (re)generate route/content types before linting or type-checking
 - `.astro` files are type-checked by `npm run typecheck:astro` (which runs `astro sync` then `astro check`), on the classic `typescript` package. The pure TypeScript in `db/`, `src/lib/`, and `src/types/` is type-checked separately by `npm run typecheck` (the native TS 7 compiler, `tsgo`), which does **not** process `.astro` files.
 
+## Component Contracts and Props
+
+Reusable components should expose a clear `Props` contract. Document the interface and any meaningful optional behaviors directly in the component file so the API is self-explanatory for both humans and Copilot.
+
+```astro
+---
+interface Props {
+  /** Primary heading shown in the page hero. */
+  title: string;
+  /** Optional accent style used for the highlight treatment. */
+  variant?: 'default' | 'featured';
+}
+const { title, variant = 'default' } = Astro.props;
+---
+```
+
+- Document non-obvious prop behavior, defaults, and content expectations.
+- Prefer explanations of intent, constraints, and defaults over prose that merely describes the field name.
+- Keep prop docs aligned with the actual behavior whenever a component changes.
+
 ## Best Practices
 
 - Keep data fetching in frontmatter (build time); avoid client-side fetching

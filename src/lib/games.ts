@@ -50,19 +50,35 @@ function baseGamesQuery(db: Database) {
         .leftJoin(publishers, eq(games.publisherId, publishers.id));
 }
 
-/** All games ordered by title. */
+/**
+ * Returns every game in a deterministic title order for the storefront and detail pages.
+ *
+ * @param db - The injectable database connection used for the page query.
+ * @returns The mapped game records sorted by title.
+ */
 export async function getAllGames(db: Database): Promise<Game[]> {
     const rows = await baseGamesQuery(db).orderBy(asc(games.title));
     return rows.map(mapGame);
 }
 
-/** All game ids ordered by title. */
+/**
+ * Lists the stable identifiers for every game in title order.
+ *
+ * @param db - The injected database connection used for the lookup.
+ * @returns The game ids sorted by title for static route generation.
+ */
 export async function getAllGameIds(db: Database): Promise<number[]> {
     const rows = await db.select({ id: games.id }).from(games).orderBy(asc(games.title));
     return rows.map((row) => row.id);
 }
 
-/** A single game by id, or null when it does not exist. */
+/**
+ * Reads one game record by id, or returns null when the title is not present.
+ *
+ * @param db - The injected database connection for the lookup.
+ * @param id - The game id to resolve.
+ * @returns The mapped game, or null when no matching row exists.
+ */
 export async function getGameById(db: Database, id: number): Promise<Game | null> {
     const row = await baseGamesQuery(db).where(eq(games.id, id)).get();
     return row ? mapGame(row) : null;

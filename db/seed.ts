@@ -50,7 +50,13 @@ async function upsertPublishers(db: Database, names: string[]): Promise<Map<stri
     return map;
 }
 
-/** Seed the database from the games CSV. Idempotent: skips existing games by title. */
+/**
+ * Seeds the local database from the shipped CSV without duplicating existing titles.
+ *
+ * @param db - The injectable database client used for the insert and lookup work.
+ * @param csvPath - The CSV file to read from; defaults to the repo's bundled seed data.
+ * @returns Resolves when the seed file has been imported without error.
+ */
 export async function seedDatabase(db: Database, csvPath: string = join(here, 'games.csv')): Promise<void> {
     const rows = parseGamesCsv(readFileSync(csvPath, 'utf-8'));
 

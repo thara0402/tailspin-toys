@@ -37,6 +37,14 @@ This is a crowdfunding platform for games with a developer theme. The applicatio
 - Use TypeScript with explicit types for function parameters and return values, especially in the data layer (`db/`, `src/lib/`)
 - Frontend code (TypeScript, Astro) must pass ESLint checks (`npm run lint`)
 
+### Commenting and documentation standards
+
+- Comment intent, not mechanics: explain why a decision exists, why a condition is unusual, or why a helper is shaped a certain way. Do not restate what the code already says.
+- Remove or rewrite comments that merely paraphrase the line below them; outdated comments are treated like bugs and should be fixed in the same change that touches the code.
+- Every exported function in `db/` and `src/lib/` should include a TSDoc/JSDoc block with a short purpose, parameter notes, and the return value. Document the injectable `db` argument when it is part of the helper contract so the testing pattern stays clear.
+- Reusable `.astro` components should document the `Props` interface so the component contract is self-explanatory for future contributors and Copilot.
+- Prefer comments that capture non-obvious decisions, trade-offs, and edge cases over routine “what is this doing?” notes.
+
 ### Data Layer Patterns (Drizzle + Node SQLite)
 
 - Define tables in `db/schema.ts`; manage schema changes with drizzle-kit migrations - see `drizzle.instructions.md`

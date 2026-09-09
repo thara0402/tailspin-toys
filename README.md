@@ -18,6 +18,17 @@ This repository is a GitHub template. When you create a new repository from it, 
 
 The workflow only runs on repositories created from the template (the `if: ${{ !github.event.repository.is_template }}` guard skips the template itself), and after creating the issues it removes itself and the `.github/bootstrap-issues/` folder in a cleanup commit so it never runs again.
 
+## Repository coding standards
+
+This repository documents its engineering conventions in the Copilot instruction files under [`.github/instructions/`](.github/instructions/). The standards emphasize:
+
+- Commenting for intent and decision-making rather than restating what the code already says
+- TSDoc/JSDoc for exported helpers in `db/` and `src/lib/`, including parameter and return documentation
+- Explicit `Props` documentation for reusable `.astro` components
+- TypeScript typing conventions and lint-based quality checks
+
+The central repo guidance is in [`.github/copilot-instructions.md`](.github/copilot-instructions.md), and the technology-specific rules live in the instruction files for Astro, Tailwind, Drizzle, Playwright, and the unit-test stack.
+
 ## Getting started
 
 Install dependencies once with Node.js 22.13 or later:

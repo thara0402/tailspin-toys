@@ -2,6 +2,7 @@
 import { clampRating, formatStarRating } from '../lib/ratings';
 
 interface Props {
+    /** The raw game rating, or null when the title has not received a score yet. */
     rating: number | null;
 }
 
