@@ -42,6 +42,10 @@ Users can filter the games listing by category and publisher using a client-side
 
 All filter data is embedded in the static HTML and filtered in the browser — no API calls needed.
 
+### Game Pagination
+
+The game list displays six cards per page with accessible Previous and Next controls. Pagination is applied in the browser alongside the existing filters so static builds keep the complete catalog available without a backend.
+
 ## Getting started
 
 Install dependencies once with Node.js 22.13 or later:

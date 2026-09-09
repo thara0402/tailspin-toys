@@ -1,4 +1,4 @@
-import { eq, asc, inArray, and } from 'drizzle-orm';
+import { eq, asc, inArray, and, count } from 'drizzle-orm';
 import type { Database } from './db';
 import { games, categories, publishers } from '../../db/schema';
 import type { Game, Category, Publisher } from '../types/game';
@@ -24,6 +24,14 @@ type GameSelectionRow = {
     publisherId: number | null;
     publisherName: string | null;
 };
+
+export interface PaginatedGames {
+    games: Game[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+}
 
 function mapGame(row: GameSelectionRow): Game {
     return {
@@ -59,6 +67,38 @@ function baseGamesQuery(db: Database) {
 export async function getAllGames(db: Database): Promise<Game[]> {
     const rows = await baseGamesQuery(db).orderBy(asc(games.title));
     return rows.map(mapGame);
+}
+
+/**
+ * Returns one deterministic page of games and the metadata needed to render pagination.
+ *
+ * @param db - The injectable database connection used for the query.
+ * @param page - The one-based page number to return; values below one use page one.
+ * @param pageSize - The number of games per page; values below one use the default of six.
+ * @returns The page of mapped games and its total result metadata.
+ */
+export async function getPaginatedGames(
+    db: Database,
+    page: number = 1,
+    pageSize: number = 6
+): Promise<PaginatedGames> {
+    const normalizedPageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 6;
+    const normalizedPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+    const [{ total }] = await db.select({ total: count() }).from(games);
+    const totalPages = Math.ceil(total / normalizedPageSize);
+    const currentPage = totalPages === 0 ? 1 : Math.min(normalizedPage, totalPages);
+    const rows = await baseGamesQuery(db)
+        .orderBy(asc(games.title))
+        .limit(normalizedPageSize)
+        .offset((currentPage - 1) * normalizedPageSize);
+
+    return {
+        games: rows.map(mapGame),
+        page: currentPage,
+        pageSize: normalizedPageSize,
+        total,
+        totalPages,
+    };
 }
 
 /**
