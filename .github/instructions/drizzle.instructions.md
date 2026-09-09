@@ -59,6 +59,26 @@ export async function getAllGameIds(db: Database): Promise<number[]> {
 
 Seed-derived values must be reproducible across builds. Derive star ratings from a stable hash of the title (`ratingFromTitle`) — **never** `Math.random()`.
 
+## Comments and TSDoc
+
+Exported helpers in `db/` and `src/lib/` should include JSDoc/TSDoc blocks whenever they are part of the shared API surface. The doc comment should explain the purpose of the helper, document each parameter, and describe the return value so readers understand the intent and the contract without reading the implementation.
+
+```ts
+/**
+ * Returns the games in title-sorted order so static builds stay deterministic.
+ *
+ * @param db - The injectable database connection used for queries and tests.
+ * @returns A list of mapped game records ordered by title.
+ */
+export async function getAllGames(db: Database): Promise<Game[]> {
+  // implementation
+}
+```
+
+- Document the injected `db` argument directly so the testing pattern stays clear.
+- Do not write comments that just repeat the function name or code flow.
+- Keep the docs aligned with the implementation when a helper's behavior changes.
+
 ## Testing
 
 Unit-test transforms directly and helpers against `createTestDatabase()`. See [`unit-tests.instructions.md`](unit-tests.instructions.md).

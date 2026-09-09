@@ -22,7 +22,7 @@ import Menu from '../assets/icons/menu.svg';
 </header>
 
 <script>
-  // Toggle menu visibility when hamburger is clicked
+  // Keep the flyout menu keyboard-friendly and consistent with the available ARIA state.
   const menuToggle = document.getElementById('menu-toggle');
   const menu = document.getElementById('menu');
   
@@ -37,7 +37,6 @@ import Menu from '../assets/icons/menu.svg';
       }
     });
     
-    // Close menu when clicking outside
     document.addEventListener('click', (event) => {
       const target = event.target;
       const isClickInside = target instanceof Node && (menuToggle.contains(target) || menu.contains(target));
@@ -47,7 +46,6 @@ import Menu from '../assets/icons/menu.svg';
       }
     });
 
-    // Close menu with Escape key and return focus to toggle button
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && !menu.classList.contains('hidden')) {
         menu.classList.add('hidden');
