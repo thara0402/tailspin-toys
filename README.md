@@ -29,6 +29,19 @@ This repository documents its engineering conventions in the Copilot instruction
 
 The central repo guidance is in [`.github/copilot-instructions.md`](.github/copilot-instructions.md), and the technology-specific rules live in the instruction files for Astro, Tailwind, Drizzle, Playwright, and the unit-test stack.
 
+## Features
+
+### Game Filtering
+
+Users can filter the games listing by category and publisher using a client-side filter form on the home page. The feature uses:
+
+- **Data layer**: `getAllCategories()`, `getAllPublishers()`, and `getFilteredGames()` helpers in `src/lib/games.ts` provide data access for filter options and filtered results
+- **UI**: `FilterControls.astro` reusable component renders category checkboxes and publisher dropdown
+- **Interactivity**: Client-side filtering script (`src/pages/index.astro`) hides/shows games based on selected filters without requiring a full page reload
+- **Accessibility**: Semantic HTML, ARIA labels, keyboard navigation, and focus states
+
+All filter data is embedded in the static HTML and filtered in the browser — no API calls needed.
+
 ## Getting started
 
 Install dependencies once with Node.js 22.13 or later:
