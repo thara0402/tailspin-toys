@@ -121,8 +121,10 @@ const publishers = await getAllPublishers(getDatabase());
         .map((input) => Number((input as HTMLInputElement).value));
       const selectedPublisher = (form.elements.namedItem('publisher') as HTMLSelectElement)?.value || '';
 
-      // Get all game cards
-      const gameCards = document.querySelectorAll('[data-game-id]');
+      // Get all game cards. Scoped to direct children of the grid, since
+      // GameCard's own inner anchor also carries a data-game-id attribute and
+      // would otherwise be double-counted by an unscoped '[data-game-id]' selector.
+      const gameCards = document.querySelectorAll('#games-grid > [data-game-id]');
       let filteredCount = 0;
 
       gameCards.forEach((card) => {
