@@ -4,6 +4,7 @@ import { categories, publishers, games } from '../../db/schema';
 import type { Database } from './db';
 import {
     getAllGames,
+    getPaginatedGames,
     getAllGameIds,
     getGameById,
     getFilteredGames,
@@ -46,6 +47,40 @@ describe('games data-access helpers', () => {
         expect(all.map((g) => g.title)).toEqual(['Game 01', 'Game 02', 'Game 03']);
         expect(all[0].category).toEqual({ id: expect.any(Number), name: 'Strategy' });
         expect(all[0].publisher).toEqual({ id: expect.any(Number), name: 'Pub One' });
+    });
+
+    describe('getPaginatedGames', () => {
+        it('returns the requested page in title order with metadata', async () => {
+            await seedGames(db, 7);
+
+            const result = await getPaginatedGames(db, 2, 3);
+
+            expect(result.page).toBe(2);
+            expect(result.pageSize).toBe(3);
+            expect(result.total).toBe(7);
+            expect(result.totalPages).toBe(3);
+            expect(result.games.map((game) => game.title)).toEqual([
+                'Game 04',
+                'Game 05',
+                'Game 06',
+            ]);
+        });
+
+        it('clamps invalid pages and uses the default page size', async () => {
+            await seedGames(db, 7);
+
+            const result = await getPaginatedGames(db, 0, 0);
+
+            expect(result.page).toBe(1);
+            expect(result.pageSize).toBe(6);
+            expect(result.games).toHaveLength(6);
+        });
+
+        it('returns an empty first page for an empty database', async () => {
+            const result = await getPaginatedGames(db, 1, 6);
+
+            expect(result).toMatchObject({ page: 1, total: 0, totalPages: 0, games: [] });
+        });
     });
 
     it('returns all game ids ordered by title', async () => {

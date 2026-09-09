@@ -71,6 +71,37 @@ const publishers = await getAllPublishers(getDatabase());
               Reset Filters
             </button>
           </div>
+
+          <nav
+            class="mt-8 flex items-center justify-between gap-4"
+            aria-label="Game list pagination"
+            data-testid="pagination"
+          >
+            <button
+              type="button"
+              id="previous-page"
+              class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              data-testid="previous-page-button"
+              aria-label="Go to previous page"
+            >
+              Previous
+            </button>
+            <span
+              id="pagination-status"
+              class="text-slate-300 text-sm"
+              data-testid="pagination-status"
+              aria-live="polite"
+            ></span>
+            <button
+              type="button"
+              id="next-page"
+              class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              data-testid="next-page-button"
+              aria-label="Go to next page"
+            >
+              Next
+            </button>
+          </nav>
         </>
       )}
     </div>
@@ -78,6 +109,9 @@ const publishers = await getAllPublishers(getDatabase());
 
   {/* Client-side filtering script */}
   <script>
+    const gamesPerPage = 6;
+    let currentPage = 1;
+
     function filterGames() {
       // Get filter form values
       const form = document.getElementById('game-filters') as HTMLFormElement;
@@ -89,7 +123,7 @@ const publishers = await getAllPublishers(getDatabase());
 
       // Get all game cards
       const gameCards = document.querySelectorAll('[data-game-id]');
-      let visibleCount = 0;
+      let filteredCount = 0;
 
       gameCards.forEach((card) => {
         const categoryId = card.getAttribute('data-category-id');
@@ -107,21 +141,40 @@ const publishers = await getAllPublishers(getDatabase());
           isVisible = isVisible && publisherId === selectedPublisher;
         }
 
-        // Show/hide the card
         const parent = card as HTMLElement;
         if (isVisible) {
+          filteredCount++;
+        } else {
+          parent.style.display = 'none';
+        }
+      });
+
+      const totalPages = Math.max(1, Math.ceil(filteredCount / gamesPerPage));
+      currentPage = Math.min(currentPage, totalPages);
+      let visibleCount = 0;
+      let filteredIndex = 0;
+      gameCards.forEach((card) => {
+        const parent = card as HTMLElement;
+        const categoryId = card.getAttribute('data-category-id');
+        const publisherId = card.getAttribute('data-publisher-id');
+        const matchesFilters =
+          (selectedCategories.length === 0 || selectedCategories.includes(Number(categoryId))) &&
+          (selectedPublisher === '' || publisherId === selectedPublisher);
+
+        if (matchesFilters && filteredIndex >= (currentPage - 1) * gamesPerPage && filteredIndex < currentPage * gamesPerPage) {
           parent.style.display = '';
           visibleCount++;
         } else {
           parent.style.display = 'none';
         }
+        if (matchesFilters) filteredIndex++;
       });
 
       // Show/hide no results message
       const noResultsMessage = document.getElementById('no-results-message') as HTMLElement;
       const gamesGrid = document.getElementById('games-grid') as HTMLElement;
       if (noResultsMessage && gamesGrid) {
-        if (visibleCount === 0 && (selectedCategories.length > 0 || selectedPublisher !== '')) {
+        if (filteredCount === 0 && (selectedCategories.length > 0 || selectedPublisher !== '')) {
           noResultsMessage.classList.remove('hidden');
           gamesGrid.setAttribute('aria-busy', 'false');
         } else {
@@ -132,8 +185,17 @@ const publishers = await getAllPublishers(getDatabase());
 
       // Update ARIA live region to announce filter results
       if (gamesGrid) {
-        const ariaLiveMessage = `Showing ${visibleCount} ${visibleCount === 1 ? 'game' : 'games'}`;
+        const ariaLiveMessage = `Showing ${visibleCount} of ${filteredCount} ${filteredCount === 1 ? 'game' : 'games'}`;
         (gamesGrid as HTMLElement).setAttribute('data-result-count', ariaLiveMessage);
+      }
+
+      const previousButton = document.getElementById('previous-page') as HTMLButtonElement;
+      const nextButton = document.getElementById('next-page') as HTMLButtonElement;
+      const paginationStatus = document.getElementById('pagination-status');
+      if (previousButton && nextButton && paginationStatus) {
+        previousButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+        paginationStatus.textContent = `Page ${currentPage} of ${totalPages}`;
       }
     }
 
@@ -146,8 +208,24 @@ const publishers = await getAllPublishers(getDatabase());
       form.addEventListener('change', (event) => {
         const target = event.target as HTMLInputElement | HTMLSelectElement;
         if (target && (target.name === 'categories' || target.name === 'publisher')) {
+          currentPage = 1;
           filterGames();
         }
+      });
+      form.addEventListener('reset', () => {
+        currentPage = 1;
+        requestAnimationFrame(filterGames);
+      });
+
+      document.getElementById('previous-page')?.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          filterGames();
+        }
+      });
+      document.getElementById('next-page')?.addEventListener('click', () => {
+        currentPage++;
+        filterGames();
       });
 
       // Initialize filter state

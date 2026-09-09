@@ -24,6 +24,24 @@ test.describe('Game Listing and Navigation', () => {
     });
   });
 
+  test('should paginate the game list', async ({ page }) => {
+    await page.goto('/');
+
+    const nextButton = page.getByTestId('next-page-button');
+    const previousButton = page.getByTestId('previous-page-button');
+    await expect(page.getByTestId('pagination-status')).toHaveText(/^Page 1 of \d+$/);
+    await expect(previousButton).toBeDisabled();
+    await expect(nextButton).toBeEnabled();
+
+    const visibleTitles = page.locator('[data-game-id]:visible').getByTestId('game-title');
+    const firstPageTitle = await visibleTitles.first().textContent();
+    await nextButton.click();
+
+    await expect(page.getByTestId('pagination-status')).toHaveText(/^Page 2 of \d+$/);
+    await expect(previousButton).toBeEnabled();
+    await expect(visibleTitles.first()).not.toHaveText(firstPageTitle ?? '');
+  });
+
   test('should navigate to correct game details page when clicking on a game', async ({ page }) => {
     let gameId: string | null;
     let gameTitle: string | null;
