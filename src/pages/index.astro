@@ -3,12 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import GameCard from '../components/GameCard.astro';
 import PageHero from '../components/PageHero.astro';
 import EmptyState from '../components/EmptyState.astro';
+import FilterControls from '../components/FilterControls.astro';
 import { getDatabase } from '../lib/db';
-import { getAllGames } from '../lib/games';
+import { getAllGames, getAllCategories, getAllPublishers } from '../lib/games';
 
 export const prerender = true;
 
 const games = await getAllGames(getDatabase());
+const categories = await getAllCategories(getDatabase());
+const publishers = await getAllPublishers(getDatabase());
 ---
 
 <Layout title="Tailspin Toys - Crowdfunding your new favorite game!">
@@ -18,16 +21,144 @@ const games = await getAllGames(getDatabase());
       subtitle="Find your next game! And maybe even back one! Explore our collection!"
     />
 
+    {/* Filter Controls */}
+    <div class="mb-8">
+      <FilterControls {categories} {publishers} />
+    </div>
+
+    {/* Games Grid */}
     <div>
       <h2 class="text-2xl font-medium mb-6 text-slate-100">Featured Games</h2>
 
       {games.length === 0 ? (
         <EmptyState text="No games available at the moment." />
       ) : (
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="games-grid">
-          {games.map((game) => <GameCard game={game} />)}
-        </div>
+        <>
+          <div
+            id="games-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            data-testid="games-grid"
+            role="region"
+            aria-label="Filtered games list"
+          >
+            {games.map((game) => (
+              <div
+                data-game-id={game.id}
+                data-category-id={game.category?.id}
+                data-publisher-id={game.publisher?.id}
+                data-testid={`game-card-${game.id}`}
+              >
+                <GameCard {game} />
+              </div>
+            ))}
+          </div>
+
+          {/* No Results Message */}
+          <div
+            id="no-results-message"
+            class="hidden text-center py-12"
+            data-testid="no-results-message"
+            role="status"
+            aria-live="polite"
+          >
+            <p class="text-slate-300 text-lg">No games match your filters.</p>
+            <button
+              class="mt-4 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              onclick="document.getElementById('game-filters').reset(); filterGames();"
+              data-testid="reset-filters-button"
+              aria-label="Reset all filters"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </>
       )}
     </div>
   </div>
+
+  {/* Client-side filtering script */}
+  <script>
+    function filterGames() {
+      // Get filter form values
+      const form = document.getElementById('game-filters') as HTMLFormElement;
+      if (!form) return;
+
+      const selectedCategories = Array.from(form.querySelectorAll('input[name="categories"]:checked'))
+        .map((input) => Number((input as HTMLInputElement).value));
+      const selectedPublisher = (form.elements.namedItem('publisher') as HTMLSelectElement)?.value || '';
+
+      // Get all game cards
+      const gameCards = document.querySelectorAll('[data-game-id]');
+      let visibleCount = 0;
+
+      gameCards.forEach((card) => {
+        const categoryId = card.getAttribute('data-category-id');
+        const publisherId = card.getAttribute('data-publisher-id');
+
+        let isVisible = true;
+
+        // Apply category filter (OR logic - show if any selected category matches)
+        if (selectedCategories.length > 0) {
+          isVisible = isVisible && selectedCategories.includes(Number(categoryId));
+        }
+
+        // Apply publisher filter (AND logic - must match if selected)
+        if (selectedPublisher !== '') {
+          isVisible = isVisible && publisherId === selectedPublisher;
+        }
+
+        // Show/hide the card
+        const parent = card as HTMLElement;
+        if (isVisible) {
+          parent.style.display = '';
+          visibleCount++;
+        } else {
+          parent.style.display = 'none';
+        }
+      });
+
+      // Show/hide no results message
+      const noResultsMessage = document.getElementById('no-results-message') as HTMLElement;
+      const gamesGrid = document.getElementById('games-grid') as HTMLElement;
+      if (noResultsMessage && gamesGrid) {
+        if (visibleCount === 0 && (selectedCategories.length > 0 || selectedPublisher !== '')) {
+          noResultsMessage.classList.remove('hidden');
+          gamesGrid.setAttribute('aria-busy', 'false');
+        } else {
+          noResultsMessage.classList.add('hidden');
+          gamesGrid.setAttribute('aria-busy', 'false');
+        }
+      }
+
+      // Update ARIA live region to announce filter results
+      if (gamesGrid) {
+        const ariaLiveMessage = `Showing ${visibleCount} ${visibleCount === 1 ? 'game' : 'games'}`;
+        (gamesGrid as HTMLElement).setAttribute('data-result-count', ariaLiveMessage);
+      }
+    }
+
+    // Initialize immediately
+    function initializeFilters() {
+      const form = document.getElementById('game-filters') as HTMLFormElement;
+      if (!form) return;
+
+      // Listen to category checkbox changes using event delegation
+      form.addEventListener('change', (event) => {
+        const target = event.target as HTMLInputElement | HTMLSelectElement;
+        if (target && (target.name === 'categories' || target.name === 'publisher')) {
+          filterGames();
+        }
+      });
+
+      // Initialize filter state
+      filterGames();
+    }
+
+    // Try to initialize immediately (for when script runs after DOM is ready)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeFilters);
+    } else {
+      initializeFilters();
+    }
+  </script>
 </Layout>
